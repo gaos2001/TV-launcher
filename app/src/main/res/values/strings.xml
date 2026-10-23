@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="redirect_label">الرئيسية: فتح الشاشة الرئيسية الخاصة</string>
+    <string name="redirect_description">يفتح الشاشة الرئيسية الجديدة بدل واجهة قوقل عند الضغط على زر الهوم. لا يقرأ أي محتوى من الشاشة.</string>
+</resources>

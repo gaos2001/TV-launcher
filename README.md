@@ -13,12 +13,14 @@
 2. اعرف عنوان IP للعصا: الإعدادات ← الشبكة والإنترنت ← شبكتك.
 3. على الجوال (نفس الواي فاي): ثبّت **Bugjaeger** من Google Play، اتصل بـ `IP:5555` ووافق على الرسالة في التلفزيون.
 4. نزّل `tv-launcher.apk` من صفحة Releases على الجوال، وثبّته على التلفزيون من Bugjaeger (تبويب Packages ← تثبيت).
-5. لجعله الواجهة الرئيسية، من Shell:
+5. لجعله الواجهة الرئيسية: Google TV ما يسمح باستبدال واجهته، فاللانشر فيه خدمة إمكانية وصول تفتحه كل ما ظهرت واجهة قوقل
+   (زر الهوم أو بعد التشغيل). فعّلها من Shell:
    ```
-   cmd package set-home-activity sa.home.tv/.HomeActivity
+   settings put secure enabled_accessibility_services sa.home.tv/sa.home.tv.HomeRedirectService
+   settings put secure accessibility_enabled 1
    ```
-   **لا توقف واجهة قوقل (`launcherx`)**: على عصا شاومي يعلّق النظام بعد إعادة التشغيل ويحتاج إعادة ضبط مصنع.
-   للرجوع لواجهة قوقل: `cmd package set-home-activity com.google.android.apps.tv.launcherx/.home.HomeActivity`
+   للإيقاف: `settings delete secure enabled_accessibility_services`
+   **لا توقف واجهة قوقل (`launcherx`)**: على أجهزة شاومي يعلّق النظام على شاشة سوداء.
 
 ## تعديل المدينة
 `app/src/main/assets/data.js` ← `CONFIG` (الاسم والإحداثيات).
