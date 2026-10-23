@@ -13,12 +13,23 @@ let paused = false;
 let currentView = 'home';
 
 // ---------------------------------------------------------------- stage scaling
+function viewport() {
+  // Inside a TV WebView the window can report 0×0 until the first layout pass.
+  const w = innerWidth || document.documentElement.clientWidth || (screen && screen.width) || 1280;
+  const h = innerHeight || document.documentElement.clientHeight || (screen && screen.height) || 720;
+  return { w, h };
+}
+let lastFit = '';
 function fitStage() {
-  const s = Math.min(innerWidth / 1280, innerHeight / 720);
+  const { w, h } = viewport();
+  const key = w + 'x' + h;
+  if (key === lastFit) return;
+  lastFit = key;
+  const s = Math.min(w / 1280, h / 720);
   const st = $('stage');
   st.style.transform = `scale(${s})`;
-  st.style.left = ((innerWidth - 1280 * s) / 2) + 'px';
-  st.style.top = ((innerHeight - 720 * s) / 2) + 'px';
+  st.style.left = ((w - 1280 * s) / 2) + 'px';
+  st.style.top = ((h - 720 * s) / 2) + 'px';
 }
 addEventListener('resize', fitStage);
 
@@ -143,6 +154,7 @@ function renderPrayer(now) {
 // ---------------------------------------------------------------- clock tick
 let tickTimer = null;
 function tick() {
+  fitStage();
   const now = new Date();
   ensurePrayers(now);
   const t = time12(now);
@@ -337,7 +349,7 @@ function matchHtml(m) {
   const logo = t => t.logo ? `<img src="${t.logo}" alt="" loading="lazy" onerror="this.remove()">` : '';
   const center = m.state === 'pre'
     ? `<div class="score time">${timeText(m.date)}</div>`
-    : `<div class="score">${m.home.score ?? '-'} - ${m.away.score ?? '-'}</div>`;
+    : `<div class="score">${m.home.score != null ? m.home.score : '-'} - ${m.away.score != null ? m.away.score : '-'}</div>`;
   return `<button class="match f${m.state === 'in' ? ' live' : ''}" data-match="${m.league.slug}|${m.id}">
     <div class="lg"><span>${m.league.name}</span><span class="st">${statusText(m)}</span></div>
     <div class="teams">
@@ -438,7 +450,7 @@ function setFocus(el) {
     }
   }
 }
-function currentScale() { return Math.min(innerWidth / 1280, innerHeight / 720); }
+function currentScale() { const v = viewport(); return Math.min(v.w / 1280, v.h / 720); }
 
 function visibleFocusables() {
   return [...document.querySelectorAll('.f')].filter(el => {
@@ -534,6 +546,8 @@ function toast(msg) {
 // ---------------------------------------------------------------- start
 function boot() {
   fitStage();
+  requestAnimationFrame(fitStage);
+  setTimeout(fitStage, 300);
   $('city').textContent = CONFIG.city;
   $('wxCity').textContent = CONFIG.city;
   startTicking();

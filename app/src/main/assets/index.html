@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>الرئيسية</title>
 <link rel="stylesheet" href="app.css">
+<script>
+  // If anything fails while starting, show it on screen instead of a black page.
+  window.onerror = function (msg, src, line) {
+    var b = document.getElementById('bootError');
+    if (!b) { b = document.createElement('pre'); b.id = 'bootError';
+      b.style.cssText = 'position:fixed;left:20px;right:20px;bottom:20px;z-index:99;padding:14px;border-radius:12px;background:#300;color:#fdd;font:14px monospace;white-space:pre-wrap;direction:ltr';
+      (document.body || document.documentElement).appendChild(b); }
+    b.textContent += msg + '  (' + String(src).split('/').pop() + ':' + line + ')\n';
+  };
+</script>
 </head>
 <body>
 <div id="stage">
