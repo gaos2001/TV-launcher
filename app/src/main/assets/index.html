@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الرئيسية</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="stage">
+  <div id="scene" aria-hidden="true"></div>
+  <div id="shade" aria-hidden="true"></div>
+
+  <!-- Top bar -->
+  <header id="topbar">
+    <div class="place">
+      <span class="pin"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg></span>
+      <div>
+        <div class="city" id="city"></div>
+        <div class="region">الرياض · السعودية</div>
+      </div>
+    </div>
+    <nav id="tabs">
+      <button class="tab f on" data-view="home">الرئيسية</button>
+      <button class="tab f" data-view="matches">المباريات</button>
+      <button class="tab f" data-view="apps">التطبيقات</button>
+    </nav>
+    <div class="topleft">
+      <div class="chip" id="wxChip"><span class="ic"></span><b>--°</b><span class="t"></span></div>
+      <button class="iconbtn f" id="btnSettings" aria-label="الإعدادات">
+        <svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.3 7.3 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a7.3 7.3 0 0 0-1.7 1l-2.5-1-2 3.5L4.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.3 7.3 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.3 7.3 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- HOME -->
+  <main id="view-home" class="view on">
+    <section id="hero">
+      <div class="hello"><i></i><span id="welcome">أهلًا بك</span></div>
+      <h1 id="greeting">صباح الخير</h1>
+      <div class="mood" id="mood"></div>
+      <div class="clock"><span id="clock">--:--</span><span class="ampm"><b id="ampm"></b><small>توقيت السعودية</small></span></div>
+      <div class="date" id="date"></div>
+    </section>
+
+    <section id="prayerCard" class="card">
+      <div class="card-h"><b>مواقيت الصلاة</b><span>أم القرى</span></div>
+      <div class="next">
+        <div><small>الصلاة القادمة</small><strong id="nextName">--</strong></div>
+        <div class="cd"><b id="countdown">--:--:--</b><small id="nextAt"></small></div>
+      </div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="grid6" id="prayerGrid"></div>
+      <div class="card-f"><span id="hijriShort"></span><span id="sunInfo"></span></div>
+    </section>
+
+    <section id="weatherCard" class="card">
+      <div class="card-h"><b>الطقس الآن</b><span id="wxCity"></span></div>
+      <div class="wx-main">
+        <div class="wx-temp"><b id="wxTemp">--</b><sup>°C</sup></div>
+        <div class="wx-icon" id="wxIcon"></div>
+      </div>
+      <div class="wx-desc"><b id="wxDesc">جاري التحميل…</b><small id="wxFeels"></small></div>
+      <div class="wx-stats">
+        <div><small>الرطوبة</small><b id="wxHum">--</b></div>
+        <div><small id="wxWindDir">الرياح</small><b id="wxWind">--</b></div>
+        <div><small>العظمى</small><b id="wxMax">--</b></div>
+        <div><small>الصغرى</small><b id="wxMin">--</b></div>
+      </div>
+      <div class="wx-hours" id="wxHours"></div>
+    </section>
+
+    <section id="matchesRow" class="row">
+      <div class="row-h"><h2>المباريات</h2><span id="matchesNote">جاري التحميل…</span></div>
+      <div class="strip" id="matchStrip"></div>
+    </section>
+
+    <section id="appsRow" class="row">
+      <div class="row-h"><h2>كل تطبيقاتك</h2><span>تنقّل بالأسهم واضغط للفتح</span></div>
+      <div class="strip apps" id="appStrip"></div>
+    </section>
+  </main>
+
+  <!-- MATCHES -->
+  <main id="view-matches" class="view">
+    <div class="page-h"><h2>المباريات</h2><span id="matchesNote2"></span></div>
+    <div class="page-scroll" id="matchesPage"></div>
+  </main>
+
+  <!-- APPS -->
+  <main id="view-apps" class="view">
+    <div class="page-h"><h2>كل التطبيقات</h2><span id="appsCount"></span></div>
+    <div class="page-scroll"><div class="app-grid" id="appGrid"></div></div>
+  </main>
+
+  <footer id="status"><span id="statusL"></span><span id="statusR"></span></footer>
+  <div id="toast"></div>
+</div>
+<script src="prayer.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

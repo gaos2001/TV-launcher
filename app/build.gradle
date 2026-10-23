@@ -1,0 +1,43 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'sa.home.tv'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'sa.home.tv'
+        minSdk 26
+        targetSdk 34
+        // CI passes the run number so every build installs over the previous one.
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)
+        versionName "1.${System.getenv('GITHUB_RUN_NUMBER') ?: '0'}"
+    }
+
+    signingConfigs {
+        // One fixed key, kept in the repo, so new builds always update the installed launcher.
+        release {
+            storeFile file('release.jks')
+            storePassword 'tvhome123'
+            keyAlias 'tvhome'
+            keyPassword 'tvhome123'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    androidResources {
+        noCompress 'woff2'
+    }
+}
