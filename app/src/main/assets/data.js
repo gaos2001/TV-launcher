@@ -195,3 +195,14 @@ const STAT_NAMES = [
   ['wonCorners', 'الركنيات'], ['foulsCommitted', 'الأخطاء'], ['offsides', 'التسلل'],
   ['yellowCards', 'البطاقات الصفراء'], ['saves', 'التصديات'],
 ];
+
+// Saudi clubs whose ESPN logos are often out of date. Current badges come from TheSportsDB
+// (community-maintained), looked up by these names and filtered to Saudi Arabia.
+const SAUDI_BADGE_NAMES = {
+  'الهلال': 'Al-Hilal', 'النصر': 'Al-Nassr', 'الاتحاد': 'Al-Ittihad', 'الأهلي': 'Al-Ahli',
+  'القادسية': 'Al-Qadsiah', 'التعاون': 'Al-Taawoun', 'الاتفاق': 'Al-Ettifaq', 'الفتح': 'Al-Fateh',
+  'الشباب': 'Al-Shabab', 'الخليج': 'Al-Khaleej', 'الفيحاء': 'Al-Fayha', 'الرياض': 'Al-Riyadh',
+  'الخلود': 'Al-Kholood', 'الأخدود': 'Al-Okhdood', 'ضمك': 'Damac', 'النجمة': 'Al-Najma',
+  'الحزم': 'Al-Hazem', 'نيوم': 'Neom', 'الوحدة': 'Al-Wehda', 'الطائي': 'Al-Taee', 'أبها': 'Abha',
+  'العروبة': 'Al-Orobah', 'الرائد': 'Al-Raed', 'الجبلين': 'Al-Jabalain', 'الباطن': 'Al-Batin',
+};

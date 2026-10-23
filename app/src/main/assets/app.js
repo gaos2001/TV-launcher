@@ -339,8 +339,39 @@ function statusText(m) {
   return dayLabel(m.date);
 }
 
+// ---------------------------------------------------------------- club badges
+// Saudi badges are swapped for current ones from TheSportsDB; cached for a week per club.
+const BADGE_TTL = 7 * 86400000;
+let badges = store.get('badges') || {};
+const badgeLoading = new Set();
+
+function logoFor(t) {
+  const key = SAUDI_BADGE_NAMES[t.name];
+  if (!key) return t.logo;
+  const b = badges[key];
+  if (b && b.url && Date.now() - b.at < BADGE_TTL) return b.url;
+  loadBadge(key);
+  return (b && b.url) || t.logo;
+}
+
+async function loadBadge(key) {
+  if (badgeLoading.has(key)) return;
+  badgeLoading.add(key);
+  const data = await getJson('https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=' + encodeURIComponent(key));
+  const list = data && Array.isArray(data.teams) ? data.teams : [];
+  const team = list.find(x => x.strCountry === 'Saudi Arabia' && x.strSport === 'Soccer' && x.strGender !== 'Female' && x.strBadge);
+  if (team) {
+    badges[key] = { url: team.strBadge + '/small', at: Date.now() };
+  } else if (data) {
+    badges[key] = { url: '', at: Date.now() };   // not found: keep ESPN's logo, retry next week
+  }
+  store.set('badges', badges);
+  badgeLoading.delete(key);
+  if (team) { renderMatches(); }
+}
+
 function matchHtml(m, big) {
-  const logo = t => t.logo ? `<img src="${t.logo}" alt="" loading="lazy" onerror="this.remove()">` : '';
+  const logo = t => { const u = logoFor(t); return u ? `<img src="${u}" alt="" loading="lazy" onerror="this.remove()">` : ''; };
   const center = m.state === 'pre'
     ? `<div class="score time">${timeText(m.date)}</div>`
     : `<div class="score">${m.away.score != null ? m.away.score : '-'} - ${m.home.score != null ? m.home.score : '-'}</div>`;
@@ -354,6 +385,9 @@ function matchHtml(m, big) {
 }
 
 function renderMatches() {
+  // Keep the remote's focus on the same match when the lists are rebuilt (live refresh, new badges).
+  const fk = focused && focused.dataset && focused.dataset.match;
+  const fInPage = !!(focused && focused.closest && focused.closest('#matchesPage'));
   const { live, upcoming, recent } = sortForStrip(matches);
   const strip = [...live, ...upcoming, ...recent].slice(0, 14);
   $('matchStrip').innerHTML = strip.length ? strip.map(m => matchHtml(m)).join('')
@@ -378,6 +412,10 @@ function renderMatches() {
   $('matchesPage').innerHTML = html || '<div class="day-h">لا توجد مباريات في الأيام القادمة</div>';
   $('matchesNote2').textContent = live.length ? `${live.length} مباراة مباشرة الآن` : 'هذا الأسبوع';
   if (currentView === 'match' && openKey) renderMatchPage();
+  if (fk && !document.body.contains(focused)) {
+    const again = document.querySelector(`${fInPage ? '#matchesPage' : '#matchStrip'} [data-match="${fk}"]`);
+    if (again) setFocus(again);
+  }
   if (focused && !document.body.contains(focused)) focusFirst();
 }
 
@@ -429,7 +467,8 @@ async function loadSummary() {
 }
 
 function teamBlock(t) {
-  return `${t.logo ? `<img src="${t.logo}" alt="" onerror="this.remove()">` : ''}<span>${t.name}</span>`;
+  const u = logoFor(t);
+  return `${u ? `<img src="${u}" alt="" onerror="this.remove()">` : ''}<span>${t.name}</span>`;
 }
 
 function renderMatchPage() {
