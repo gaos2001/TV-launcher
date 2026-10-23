@@ -2,12 +2,13 @@
 'use strict';
 
 const CONFIG = {
+  family: 'الوكيل',
   city: 'حوطة بني تميم',
   lat: 23.49598,
   lng: 46.87801,
   tz: 3,                       // Saudi Arabia, no daylight saving
   weatherEveryMin: 20,
-  matchesEveryMin: 10,         // every 2 minutes while a match is live
+  matchesEveryMin: 10,         // every minute while a match is live
 };
 
 // Apps shown first, in this order, when installed. Everything else follows alphabetically.
@@ -180,3 +181,17 @@ function sceneSvg(period, sunPos) {
 <path d="M0 ${G}h1280v${720 - G}H0z"/></g>
 </svg>`;
 }
+
+// Streaming apps offered on the match page. Matched against installed apps by name/package.
+const WATCH_APPS = [
+  { name: 'ثمانية', keys: 'thmanyah|ثمانية', store: 'ثمانية', saudi: true },
+  { name: 'TOD', keys: 'tod|bein', store: 'TOD' },
+  { name: 'شاهد', keys: 'shahid|شاهد', store: 'شاهد' },
+  { name: 'STC tv', keys: 'stc tv|stctv|jawwy', store: 'stc tv' },
+];
+
+const STAT_NAMES = [
+  ['possessionPct', 'الاستحواذ', '%'], ['totalShots', 'التسديدات'], ['shotsOnTarget', 'على المرمى'],
+  ['wonCorners', 'الركنيات'], ['foulsCommitted', 'الأخطاء'], ['offsides', 'التسلل'],
+  ['yellowCards', 'البطاقات الصفراء'], ['saves', 'التصديات'],
+];

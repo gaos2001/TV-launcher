@@ -237,10 +237,6 @@ function renderWeather(d) {
     $('wxMin').textContent = Math.round(d.daily.temperature_2m_min[0]) + '°';
   }
   $('wxCity').textContent = CONFIG.city;
-  const chip = $('wxChip');
-  chip.querySelector('.ic').innerHTML = icon(info.i);
-  chip.querySelector('b').textContent = temp + '°';
-  chip.querySelector('.t').textContent = info.t;
 
   // Next hours, every 2 hours starting from the current hour.
   if (d.hourly && d.hourly.time) {
@@ -286,8 +282,10 @@ function parseEvents(json, league) {
         detail: type.shortDetail || '',
         clock: st.displayClock || '',
         name: type.name || '',
-        home: { name: teamAr(home.team && (home.team.displayName || home.team.name)), logo: home.team && home.team.logo, score: home.score },
-        away: { name: teamAr(away.team && (away.team.displayName || away.team.name)), logo: away.team && away.team.logo, score: away.score },
+        home: { id: home.team && home.team.id, name: teamAr(home.team && (home.team.displayName || home.team.name)), logo: home.team && home.team.logo, score: home.score },
+        away: { id: away.team && away.team.id, name: teamAr(away.team && (away.team.displayName || away.team.name)), logo: away.team && away.team.logo, score: away.score },
+        venue: comp.venue && (comp.venue.fullName || (comp.venue.address && comp.venue.address.city)) || '',
+        details: Array.isArray(comp.details) ? comp.details : [],
       });
     } catch (e) { /* skip malformed event */ }
   }
@@ -315,7 +313,7 @@ async function loadMatches() {
   renderMatches();
   const live = matches.some(m => m.state === 'in');
   clearTimeout(matchesTimer);
-  matchesTimer = setTimeout(loadMatches, (live ? 2 : CONFIG.matchesEveryMin) * 60000);
+  matchesTimer = setTimeout(loadMatches, (live ? 1 : CONFIG.matchesEveryMin) * 60000);
 }
 
 function restoreMatches() {
@@ -345,12 +343,12 @@ function statusText(m) {
   return dayLabel(m.date);
 }
 
-function matchHtml(m) {
+function matchHtml(m, big) {
   const logo = t => t.logo ? `<img src="${t.logo}" alt="" loading="lazy" onerror="this.remove()">` : '';
   const center = m.state === 'pre'
     ? `<div class="score time">${timeText(m.date)}</div>`
-    : `<div class="score">${m.home.score != null ? m.home.score : '-'} - ${m.away.score != null ? m.away.score : '-'}</div>`;
-  return `<button class="match f${m.state === 'in' ? ' live' : ''}" data-match="${m.league.slug}|${m.id}">
+    : `<div class="score">${m.away.score != null ? m.away.score : '-'} - ${m.home.score != null ? m.home.score : '-'}</div>`;
+  return `<button class="match f${big ? ' big' : ''}${m.state === 'in' ? ' live' : ''}" data-match="${m.league.slug}|${m.id}">
     <div class="lg"><span>${m.league.name}</span><span class="st">${statusText(m)}</span></div>
     <div class="teams">
       <div class="team">${logo(m.home)}<span>${m.home.name}</span></div>
@@ -362,10 +360,10 @@ function matchHtml(m) {
 function renderMatches() {
   const { live, upcoming, recent } = sortForStrip(matches);
   const strip = [...live, ...upcoming, ...recent].slice(0, 14);
-  $('matchStrip').innerHTML = strip.length ? strip.map(matchHtml).join('')
+  $('matchStrip').innerHTML = strip.length ? strip.map(m => matchHtml(m)).join('')
     : '<div class="match empty">لا توجد مباريات قريبة</div>';
-  const note = live.length ? `${live.length} مباشر الآن · اضغط على مباراة سعودية لفتح ثمانية`
-    : upcoming.length ? `القادمة: ${dayLabel(upcoming[0].date)} ${timeText(upcoming[0].date)}` : '';
+  const note = live.length ? `${live.length} مباشر الآن · اضغط على أي مباراة للتفاصيل`
+    : upcoming.length ? `القادمة: ${dayLabel(upcoming[0].date)} ${timeText(upcoming[0].date)} · اضغط للتفاصيل` : '';
   $('matchesNote').textContent = note;
 
   // Full page grouped by day.
@@ -379,25 +377,153 @@ function renderMatches() {
   let html = '';
   for (const [k, list] of byDay) {
     if (k < today.getTime() - 86400000) continue;
-    html += `<div class="day-h">${dayLabel(new Date(k))}</div><div class="day-grid">${list.map(matchHtml).join('')}</div>`;
+    html += `<div class="day-h">${dayLabel(new Date(k))}</div><div class="day-grid">${list.map(m => matchHtml(m, true)).join('')}</div>`;
   }
   $('matchesPage').innerHTML = html || '<div class="day-h">لا توجد مباريات في الأيام القادمة</div>';
   $('matchesNote2').textContent = live.length ? `${live.length} مباراة مباشرة الآن` : 'هذا الأسبوع';
+  if (currentView === 'match' && openKey) renderMatchPage();
   if (focused && !document.body.contains(focused)) focusFirst();
 }
 
+// ---------------------------------------------------------------- match details page
+let openKey = null, prevView = 'home', summary = null, summaryTimer = null;
+const findMatch = key => { const [slug, id] = key.split('|'); return matches.find(x => x.league.slug === slug && String(x.id) === id); };
+
 function openMatch(key) {
-  const [slug, id] = key.split('|');
-  const m = matches.find(x => x.league.slug === slug && String(x.id) === id);
+  if (!findMatch(key)) return;
+  if (currentView !== 'match') prevView = currentView;
+  openKey = key;
+  summary = null;
+  showView('match');
+  renderMatchPage();
+  setFocus(document.querySelector('#mdActions .btn'));
+  loadSummary();
+}
+
+function closeMatch() {
+  clearTimeout(summaryTimer);
+  const key = openKey;
+  openKey = null;
+  showView(prevView);
+  const el = document.querySelector(`#view-${prevView} [data-match="${key}"]`);
+  el ? setFocus(el) : focusFirst();
+}
+
+async function loadSummary() {
+  clearTimeout(summaryTimer);
+  const key = openKey, m = key && findMatch(key);
   if (!m) return;
-  if (m.league.thmanyah) {
-    const pkg = native ? native.findApp('thmanyah|ثمانية') : '';
-    if (pkg) { native.launch(pkg); return; }
-    toast('تطبيق ثمانية غير مثبت · افتح المتجر');
-    if (native) native.openStore('ثمانية');
-  } else {
-    toast(`${m.home.name} × ${m.away.name} · ${m.league.name}`);
+  const data = await getJson(`https://site.api.espn.com/apis/site/v2/sports/soccer/${m.league.slug}/summary?event=${m.id}`);
+  if (key !== openKey) return;
+  if (data) {
+    summary = data;
+    // The summary header carries the freshest score and clock.
+    try {
+      const comp = data.header.competitions[0];
+      const st = comp.status || {}, type = st.type || {};
+      if (type.state) { m.state = type.state; m.detail = type.shortDetail || m.detail; m.name = type.name || m.name; m.clock = st.displayClock || m.clock; }
+      for (const c of comp.competitors || []) {
+        const side = c.homeAway === 'home' ? m.home : m.away;
+        if (c.score != null) side.score = c.score;
+      }
+    } catch (e) { }
+    renderMatchPage();
   }
+  if (m.state === 'in') summaryTimer = setTimeout(loadSummary, 45000);
+}
+
+function teamBlock(t) {
+  return `${t.logo ? `<img src="${t.logo}" alt="" onerror="this.remove()">` : ''}<span>${t.name}</span>`;
+}
+
+function renderMatchPage() {
+  const m = openKey && findMatch(openKey);
+  if (!m) return;
+  $('mdLeague').textContent = m.league.name;
+  $('mdWhen').textContent = `${dayLabel(m.date)} · ${timeText(m.date)}`;
+  $('mdHome').innerHTML = teamBlock(m.home);
+  $('mdAway').innerHTML = teamBlock(m.away);
+  const sc = $('mdScore');
+  if (m.state === 'pre') { sc.className = 'md-score time'; sc.textContent = timeText(m.date); }
+  else { sc.className = 'md-score'; sc.textContent = `${m.away.score != null ? m.away.score : '-'} - ${m.home.score != null ? m.home.score : '-'}`; } // LTR box: home score on the right
+  const stEl = $('mdStatus');
+  stEl.className = 'md-status' + (m.state === 'in' ? ' live' : '');
+  stEl.textContent = m.state === 'pre' ? 'لم تبدأ بعد' : statusText(m);
+  $('mdVenue').textContent = m.venue ? '🏟 ' + m.venue : '';
+  $('mdEvents').innerHTML = eventsHtml(m);
+  $('mdStats').innerHTML = statsHtml(m);
+  renderWatchButtons(m);
+}
+
+function eventsHtml(m) {
+  if (m.state === 'pre') return '<div class="md-empty">الأحداث تظهر أول ما تبدأ المباراة</div>';
+  const rows = [];
+  const homeId = String(m.home.id);
+  const add = (minute, teamId, kind, who) => {
+    const ic = kind === 'goal' ? '<span class="ic">⚽</span>' : `<span class="ic bk ${kind === 'red' ? 'r' : 'y'}"></span>`;
+    const cell = `${ic}${who || ''}`;
+    const isHome = String(teamId) === homeId;
+    rows.push({ minute, html: `<div class="ev"><div class="h">${isHome ? cell : ''}</div><div class="m">${minute}</div><div class="a">${isHome ? '' : cell}</div></div>` });
+  };
+  const key = summary && Array.isArray(summary.keyEvents) ? summary.keyEvents : null;
+  if (key) {
+    for (const e of key) {
+      const t = ((e.type && (e.type.type || e.type.text)) || '').toLowerCase();
+      const kind = e.scoringPlay || /goal|penalty - scored/.test(t) ? 'goal' : /red/.test(t) ? 'red' : /yellow/.test(t) ? 'yellow' : null;
+      if (!kind) continue;
+      const who = e.participants && e.participants[0] && e.participants[0].athlete ? e.participants[0].athlete.displayName : '';
+      add((e.clock && e.clock.displayValue) || '', e.team && e.team.id, kind, who + (/own/.test(t) ? ' (عكسي)' : /pen/.test(t) && kind === 'goal' ? ' (جزاء)' : ''));
+    }
+  } else {
+    for (const d of m.details || []) {
+      const t = ((d.type && d.type.text) || '').toLowerCase();
+      const kind = d.scoringPlay ? 'goal' : d.redCard ? 'red' : d.yellowCard ? 'yellow' : /goal/.test(t) ? 'goal' : null;
+      if (!kind) continue;
+      const who = d.athletesInvolved && d.athletesInvolved[0] ? d.athletesInvolved[0].displayName : '';
+      add((d.clock && d.clock.displayValue) || '', d.team && d.team.id, kind, who + (d.ownGoal ? ' (عكسي)' : d.penaltyKick && kind === 'goal' ? ' (جزاء)' : ''));
+    }
+  }
+  if (!rows.length) return '<div class="md-empty">لا أهداف ولا بطاقات حتى الآن</div>';
+  return rows.slice(-9).map(r => r.html).join('');
+}
+
+function statsHtml(m) {
+  const teams = summary && summary.boxscore && summary.boxscore.teams;
+  if (!teams || teams.length < 2) {
+    return `<div class="md-empty">${m.state === 'pre' ? 'الإحصائيات تظهر أثناء المباراة' : summary ? 'لا توجد إحصائيات لهذه المباراة' : 'جاري التحميل…'}</div>`;
+  }
+  const byId = {};
+  for (const t of teams) byId[String(t.team && t.team.id)] = t.statistics || [];
+  const hs = byId[String(m.home.id)] || teams[0].statistics || [];
+  const as = byId[String(m.away.id)] || teams[1].statistics || [];
+  const val = (list, name) => { const x = list.find(s => s.name === name); return x ? x.displayValue : null; };
+  let html = '';
+  for (const [name, label, unit] of STAT_NAMES) {
+    const h = val(hs, name), a = val(as, name);
+    if (h == null || a == null) continue;
+    const hn = parseFloat(h) || 0, an = parseFloat(a) || 0, total = hn + an || 1;
+    html += `<div class="st"><div class="st-h"><span>${Math.round(hn)}${unit || ''}</span><span>${label}</span><span>${Math.round(an)}${unit || ''}</span></div>
+      <div class="st-b"><i class="${hn >= an ? 'hi' : ''}" style="width:${(hn / total * 100).toFixed(1)}%"></i><i class="${an > hn ? 'hi' : ''}" style="width:${(an / total * 100).toFixed(1)}%"></i></div></div>`;
+    if (html.split('class="st"').length > 6) break;
+  }
+  return html || '<div class="md-empty">لا توجد إحصائيات لهذه المباراة</div>';
+}
+
+function renderWatchButtons(m) {
+  const box = $('mdActions');
+  const focusedIdx = [...box.children].indexOf(focused);
+  const btns = [];
+  for (const a of WATCH_APPS) {
+    const pkg = native ? native.findApp(a.keys) : '';
+    const app = pkg && apps.find(x => x.pkg === pkg);
+    const icon = app ? `<img src="${app.img}" alt="">` : '';
+    if (pkg) btns.push(`<button class="btn f${btns.length ? '' : ' primary'}" data-app="${pkg}">${icon}شاهد على ${a.name}</button>`);
+    else if (a.saudi && m.league.thmanyah) btns.push(`<button class="btn f${btns.length ? '' : ' primary'}" data-store="${a.store}">تثبيت ${a.name}</button>`);
+    if (btns.length >= 3) break;
+  }
+  btns.push('<button class="btn f" data-close="1">رجوع</button>');
+  box.innerHTML = btns.join('');
+  if (focusedIdx >= 0 && box.children[focusedIdx]) setFocus(box.children[focusedIdx]);
 }
 
 // ---------------------------------------------------------------- apps
@@ -502,7 +628,10 @@ function activate(el) {
     if (native) { if (!native.launch(el.dataset.pkg)) toast('تعذّر فتح التطبيق'); }
     return;
   }
-  if (el.dataset.match) openMatch(el.dataset.match);
+  if (el.dataset.match) { openMatch(el.dataset.match); return; }
+  if (el.dataset.app) { if (native) native.launch(el.dataset.app); return; }
+  if (el.dataset.store) { if (native) native.openStore(el.dataset.store); return; }
+  if (el.dataset.close) closeMatch();
 }
 
 document.addEventListener('keydown', e => {
@@ -518,10 +647,11 @@ document.addEventListener('click', e => {
 });
 
 window.onBack = () => {
+  if (currentView === 'match') { closeMatch(); return; }
   if (currentView !== 'home') { showView('home'); focusFirst(); return; }
   focusFirst();
 };
-window.onHomeKey = () => { showView('home'); focusFirst(); };
+window.onHomeKey = () => { clearTimeout(summaryTimer); openKey = null; showView('home'); focusFirst(); };
 window.onHomePause = () => { paused = true; stopTicking(); };
 window.onHomeResume = () => {
   paused = false;
@@ -549,6 +679,7 @@ function boot() {
   requestAnimationFrame(fitStage);
   setTimeout(fitStage, 300);
   $('city').textContent = CONFIG.city;
+  $('family').textContent = CONFIG.family;
   $('wxCity').textContent = CONFIG.city;
   startTicking();
   renderWeather(store.get('weather'));

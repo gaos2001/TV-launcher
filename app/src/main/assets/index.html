@@ -24,11 +24,8 @@
   <!-- Top bar -->
   <header id="topbar">
     <div class="place">
-      <span class="pin"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg></span>
-      <div>
-        <div class="city" id="city"></div>
-        <div class="region">الرياض · السعودية</div>
-      </div>
+      <span class="pin"><svg viewBox="0 0 24 24"><path d="M12 3 3 10.5V21h6.5v-6h5v6H21V10.5z"/></svg></span>
+      <div class="family" id="family"></div>
     </div>
     <nav id="tabs">
       <button class="tab f on" data-view="home">الرئيسية</button>
@@ -36,7 +33,7 @@
       <button class="tab f" data-view="apps">التطبيقات</button>
     </nav>
     <div class="topleft">
-      <div class="chip" id="wxChip"><span class="ic"></span><b>--°</b><span class="t"></span></div>
+      <div class="cityTag"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg><span id="city"></span></div>
       <button class="iconbtn f" id="btnSettings" aria-label="الإعدادات">
         <svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.3 7.3 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a7.3 7.3 0 0 0-1.7 1l-2.5-1-2 3.5L4.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.3 7.3 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.3 7.3 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
       </button>
@@ -101,6 +98,24 @@
   <main id="view-apps" class="view">
     <div class="page-h"><h2>كل التطبيقات</h2><span id="appsCount"></span></div>
     <div class="page-scroll"><div class="app-grid" id="appGrid"></div></div>
+  </main>
+
+  <!-- MATCH DETAILS -->
+  <main id="view-match" class="view">
+    <div class="md">
+      <div class="md-top"><span id="mdLeague"></span><span id="mdWhen"></span></div>
+      <div class="md-board">
+        <div class="md-team" id="mdHome"></div>
+        <div class="md-mid"><div class="md-score" id="mdScore"></div><div class="md-status" id="mdStatus"></div></div>
+        <div class="md-team" id="mdAway"></div>
+      </div>
+      <div class="md-venue" id="mdVenue"></div>
+      <div class="md-body">
+        <div class="md-col"><h3>أحداث المباراة</h3><div id="mdEvents" class="md-events"></div></div>
+        <div class="md-col"><h3>الإحصائيات</h3><div id="mdStats" class="md-stats"></div></div>
+      </div>
+      <div class="md-actions" id="mdActions"></div>
+    </div>
   </main>
 
   <footer id="status"><span id="statusL"></span><span id="statusR"></span></footer>
