@@ -234,3 +234,10 @@ svg { display: block; }
 .btn.primary { background: var(--gold); color: #1a1408; }
 .btn img { width: 26px; height: 26px; border-radius: 6px; }
 .btn.focus { transform: scale(1.08); box-shadow: 0 0 0 3px var(--focus); }
+
+/* v3: date moves to the bottom-left; no repeated footers */
+#statusR { font-size: 14px; color: var(--ink-2); font-weight: 600; }
+#status { bottom: 10px; align-items: baseline; }
+.pt { height: 74px; }
+.pt b { font-size: 21px; }
+.grid6 { gap: 10px; }

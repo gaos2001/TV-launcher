@@ -96,12 +96,12 @@ function renderScene(now, p) {
 }
 
 const MOODS = {
-  dawn: `نسمة فجر هادئة على ${CONFIG.city}`,
-  morning: `صباح مشمس في ${CONFIG.city}`,
-  noon: `شمس الظهيرة فوق ${CONFIG.city}`,
-  afternoon: `عصرية لطيفة في ${CONFIG.city}`,
-  sunset: `غروب ذهبي على ${CONFIG.city}`,
-  night: `ليلة هادئة في ${CONFIG.city}`,
+  dawn: 'نسمة فجر هادئة',
+  morning: 'صباح مشمس وجميل',
+  noon: 'شمس الظهيرة في كبد السماء',
+  afternoon: 'عصرية لطيفة',
+  sunset: 'غروب ذهبي على الكثبان',
+  night: 'ليلة هادئة',
 };
 
 // ---------------------------------------------------------------- prayer
@@ -118,8 +118,6 @@ function ensurePrayers(now) {
     const t = time12(prayers[k]);
     return `<div class="pt" id="pt-${k}"><small>${PRAYER_NAMES[k]}</small><b>${t.hm}<span>${t.ap}</span></b></div>`;
   }).join('');
-  $('hijriShort').textContent = hijri(now, true);
-  $('sunInfo').textContent = `الشروق ${timeText(prayers.sunrise)} · المغرب ${timeText(prayers.maghrib)}`;
 }
 
 function renderPrayer(now) {
@@ -162,11 +160,10 @@ function tick() {
   $('ampm').textContent = t.ap;
   const h = now.getHours();
   $('greeting').textContent = h >= 4 && h < 12 ? 'صباح الخير' : 'مساء الخير';
-  $('date').textContent = `${gregorian(now)}  ·  ${hijri(now, true)}`;
   renderPrayer(now);
   renderScene(now, prayers);
   $('mood').textContent = MOODS[lastPeriod] || '';
-  $('statusR').textContent = `${CONFIG.city} · ${t.hm} ${t.ap}`;
+  $('statusR').textContent = `${gregorian(now)}  ·  ${hijri(now, true)}`;
 }
 function startTicking() {
   stopTicking();
@@ -228,7 +225,7 @@ function renderWeather(d) {
   $('wxTemp').textContent = temp;
   $('wxIcon').innerHTML = icon(info.i);
   $('wxDesc').textContent = info.t;
-  $('wxFeels').textContent = `الإحساس ${Math.round(c.apparent_temperature)}° · ${CONFIG.city}`;
+  $('wxFeels').textContent = `الإحساس ${Math.round(c.apparent_temperature)}°`;
   $('wxHum').textContent = Math.round(c.relative_humidity_2m) + '%';
   $('wxWind').textContent = `${Math.round(c.wind_speed_10m)} كم/س`;
   $('wxWindDir').textContent = 'الرياح ' + windDir(c.wind_direction_10m);
@@ -236,7 +233,6 @@ function renderWeather(d) {
     $('wxMax').textContent = Math.round(d.daily.temperature_2m_max[0]) + '°';
     $('wxMin').textContent = Math.round(d.daily.temperature_2m_min[0]) + '°';
   }
-  $('wxCity').textContent = CONFIG.city;
 
   // Next hours, every 2 hours starting from the current hour.
   if (d.hourly && d.hourly.time) {
@@ -514,10 +510,12 @@ function renderWatchButtons(m) {
   const focusedIdx = [...box.children].indexOf(focused);
   const btns = [];
   for (const a of WATCH_APPS) {
+    if (a.saudi && !m.league.thmanyah) continue;   // Thmanyah: Saudi competitions only
+    if (a.other && m.league.thmanyah) continue;    // other apps: everything else
     const pkg = native ? native.findApp(a.keys) : '';
     const app = pkg && apps.find(x => x.pkg === pkg);
     const icon = app ? `<img src="${app.img}" alt="">` : '';
-    if (pkg) btns.push(`<button class="btn f${btns.length ? '' : ' primary'}" data-app="${pkg}">${icon}شاهد على ${a.name}</button>`);
+    if (pkg) btns.push(`<button class="btn f${btns.length ? '' : ' primary'}" data-app="${pkg}">${icon}شاهد البث على ${a.name}</button>`);
     else if (a.saudi && m.league.thmanyah) btns.push(`<button class="btn f${btns.length ? '' : ' primary'}" data-store="${a.store}">تثبيت ${a.name}</button>`);
     if (btns.length >= 3) break;
   }
@@ -680,7 +678,6 @@ function boot() {
   setTimeout(fitStage, 300);
   $('city').textContent = CONFIG.city;
   $('family').textContent = CONFIG.family;
-  $('wxCity').textContent = CONFIG.city;
   startTicking();
   renderWeather(store.get('weather'));
   restoreMatches();

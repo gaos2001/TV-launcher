@@ -2,7 +2,7 @@
 'use strict';
 
 const CONFIG = {
-  family: 'الوكيل',
+  family: 'الوشيل',
   city: 'حوطة بني تميم',
   lat: 23.49598,
   lng: 46.87801,
@@ -184,10 +184,10 @@ function sceneSvg(period, sunPos) {
 
 // Streaming apps offered on the match page. Matched against installed apps by name/package.
 const WATCH_APPS = [
-  { name: 'ثمانية', keys: 'thmanyah|ثمانية', store: 'ثمانية', saudi: true },
-  { name: 'TOD', keys: 'tod|bein', store: 'TOD' },
-  { name: 'شاهد', keys: 'shahid|شاهد', store: 'شاهد' },
-  { name: 'STC tv', keys: 'stc tv|stctv|jawwy', store: 'stc tv' },
+  { name: 'ثمانية', keys: 'thmanyah|thamanyah|thmanya|ثمانية|ثمانيه', store: 'ثمانية', saudi: true },
+  { name: 'TOD', keys: 'tod|bein', store: 'TOD', other: true },
+  { name: 'شاهد', keys: 'shahid|شاهد', store: 'شاهد', other: true },
+  { name: 'STC tv', keys: 'stc tv|stctv|jawwy', store: 'stc tv', other: true },
 ];
 
 const STAT_NAMES = [
